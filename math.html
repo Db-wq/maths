@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Solver from Image</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/10.4.0/math.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.1/dist/tesseract.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            flex-direction: column;
+        }
+
+        .container {
+            background: #ffffff;
+            padding: 30px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            width: 350px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        input[type="file"] {
+            display: block;
+            margin: 20px auto;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .result {
+            margin-top: 20px;
+            font-size: 20px;
+            font-weight: bold;
+            text-align: center;
+            color: #333;
+        }
+
+        .error {
+            color: red;
+            text-align: center;
+        }
+
+        .loading {
+            text-align: center;
+            font-size: 18px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Math Solver from Image</h1>
+        <input type="file" id="imageInput" accept="image/*">
+        <button onclick="solveMathFromImage()">Solve Math</button>
+        <div class="loading" id="loadingMessage"></div>
+        <div class="result" id="result"></div>
+        <div class="error" id="error"></div>
+    </div>
+
+    <script>
+        function solveMathFromImage() {
+            let imageInput = document.getElementById('imageInput');
+            let resultElement = document.getElementById('result');
+            let errorElement = document.getElementById('error');
+            let loadingMessage = document.getElementById('loadingMessage');
+
+            // Clear previous results and errors
+            resultElement.textContent = '';
+            errorElement.textContent = '';
+            loadingMessage.textContent = 'Processing image...';
+
+            // Check if an image is selected
+            if (imageInput.files.length === 0) {
+                errorElement.textContent = "Please upload an image first!";
+                return;
+            }
+
+            // Get the selected image file
+            let file = imageInput.files[0];
+
+            // Use Tesseract.js to extract text from the image
+            Tesseract.recognize(
+                file,
+                'eng', // Language
+                {
+                    logger: (m) => console.log(m) // Log progress
+                }
+            ).then(({ data: { text } }) => {
+                // Once the text is extracted, display the extracted expression
+                loadingMessage.textContent = 'Processing math...';
+                console.log("Extracted text:", text);
+
+                // Now, try to solve the extracted math expression using Math.js
+                try {
+                    // Clean the text (e.g., remove any unnecessary whitespace)
+                    let cleanedText = text.replace(/\s+/g, '').replace(/[^0-9+\-*/().sin\^coslogsqrtpie]/g, '');
+
+                    // Use Math.js to solve the math expression
+                    let result = math.evaluate(cleanedText);
+
+                    // Display the result
+                    resultElement.textContent = `Result: ${result}`;
+                    loadingMessage.textContent = '';
+                } catch (error) {
+                    // If something goes wrong (invalid expression)
+                    errorElement.textContent = "Unable to solve the extracted math expression!";
+                    loadingMessage.textContent = '';
+                }
+            }).catch((err) => {
+                errorElement.textContent = "Error processing image: " + err.message;
+                loadingMessage.textContent = '';
+            });
+        }
+    </script>
+
+</body>
+</html>
